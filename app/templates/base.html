@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Protótipo acadêmico Recicla Bairro.">
+  <title>{% block title %}Recicla Bairro{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="{{ url_for('main.index') }}" aria-label="Recicla Bairro - início">
+      <span class="brand-mark" aria-hidden="true">↻</span>
+      <span>
+        <strong>Recicla Bairro</strong>
+        <small>Gestão de coletas</small>
+      </span>
+    </a>
+    <span class="status-pill">MVP em desenvolvimento</span>
+  </header>
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <span>Recicla Bairro · Projeto acadêmico</span>
+    <span>Dados demonstrativos · Não utilizar dados pessoais reais</span>
+  </footer>
+</body>
+</html>
