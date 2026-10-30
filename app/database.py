@@ -7,6 +7,13 @@ from pathlib import Path
 
 from flask import current_app, g
 
+MATERIAIS_INICIAIS = (
+    ("Papel", "Papel e papelão limpos e secos."),
+    ("Plástico", "Embalagens e outros materiais plásticos recicláveis."),
+    ("Vidro", "Garrafas e recipientes de vidro."),
+    ("Metal", "Latas e outros materiais metálicos."),
+)
+
 
 def get_db() -> sqlite3.Connection:
     """Retorna uma conexão SQLite associada ao contexto da requisição."""
@@ -26,11 +33,19 @@ def close_db(error: BaseException | None = None) -> None:
     """Fecha a conexão SQLite ao final do contexto da aplicação."""
     connection = g.pop("db", None)
     if connection is not None:
+        if error is not None:
+            connection.rollback()
         connection.close()
 
 
 def init_db() -> None:
-    """Executa o esquema SQL inicial do projeto."""
+    """Cria as tabelas e cadastra os tipos de materiais iniciais."""
     schema_path = Path(__file__).with_name("schema.sql")
     schema = schema_path.read_text(encoding="utf-8")
-    get_db().executescript(schema)
+    db = get_db()
+    db.executescript(schema)
+    db.executemany(
+        "INSERT OR IGNORE INTO TipoMaterial (nome, descricao) VALUES (?, ?)",
+        MATERIAIS_INICIAIS,
+    )
+    db.commit()

@@ -3,6 +3,7 @@
 import pytest
 
 from app import create_app
+from app.database import init_db
 
 
 @pytest.fixture()
@@ -15,6 +16,8 @@ def app(tmp_path):
             "DATABASE": str(database_path),
         }
     )
+    with application.app_context():
+        init_db()
     yield application
 
 

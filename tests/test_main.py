@@ -18,3 +18,10 @@ def test_health_endpoint_returns_ok(client):
         "status": "ok",
         "message": "Estrutura inicial da aplicação disponível.",
     }
+
+
+def test_data_sqlite_e_apresentada_no_horario_de_brasilia(app):
+    formatter = app.jinja_env.filters["datetime_br"]
+
+    # CURRENT_TIMESTAMP do SQLite é UTC; a tela deve apresentar UTC-03.
+    assert formatter("2026-10-30 17:44:55") == "30/10/2026 às 14:44:55"

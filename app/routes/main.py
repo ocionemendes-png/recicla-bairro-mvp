@@ -7,7 +7,7 @@ main_bp = Blueprint("main", __name__)
 
 @main_bp.get("/")
 def index():
-    """Apresenta a página inicial e o estado atual do MVP."""
+    """Apresenta a página inicial do MVP."""
     return render_template("index.html")
 
 

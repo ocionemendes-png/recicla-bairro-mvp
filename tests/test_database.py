@@ -33,9 +33,10 @@ def test_solicitacao_rejects_invalid_status(app):
             ("Pessoa de Teste", "teste@example.invalid"),
         )
         tipo = db.execute(
-            "INSERT INTO TipoMaterial (nome) VALUES (?)",
+            "SELECT id_tipo_material FROM TipoMaterial WHERE nome = ?",
             ("Papel",),
-        )
+        ).fetchone()
+        assert tipo is not None
 
         with pytest.raises(sqlite3.IntegrityError):
             db.execute(
@@ -46,7 +47,7 @@ def test_solicitacao_rejects_invalid_status(app):
                 """,
                 (
                     solicitante.lastrowid,
-                    tipo.lastrowid,
+                    tipo["id_tipo_material"],
                     "Rua de Teste, 100",
                     "status inválido",
                 ),

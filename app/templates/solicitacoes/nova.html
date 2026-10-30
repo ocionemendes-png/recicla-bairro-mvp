@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Nova solicitação | Recicla Bairro{% endblock %}
+
+{% block content %}
+<section class="page-heading">
+  <p class="eyebrow">SOLICITAÇÕES / NOVA SOLICITAÇÃO</p>
+  <h1>Nova solicitação</h1>
+  <p class="lead">Registre os dados do pedido para organizar a próxima coleta.</p>
+</section>
+
+{% if erros.get('geral') %}
+  <div class="form-alert error" role="alert">{{ erros['geral'] }}</div>
+{% endif %}
+
+<div class="form-layout">
+  <section class="form-card">
+    <h2>Dados da solicitação</h2>
+    <p class="form-intro">As informações abaixo serão utilizadas para registrar e acompanhar o pedido.</p>
+
+    <form method="post" action="{{ url_for('solicitacoes.nova') }}" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="nome">Nome do solicitante <span aria-hidden="true">*</span></label>
+          <input id="nome" name="nome" type="text" maxlength="120" required
+                 autocomplete="name" value="{{ dados.get('nome', '') }}"
+                 aria-invalid="{{ 'true' if erros.get('nome') else 'false' }}"
+                 aria-describedby="nome-help{% if erros.get('nome') %} nome-error{% endif %}"
+                 placeholder="Ex.: João da Silva">
+          <small id="nome-help">Até 120 caracteres.</small>
+          {% if erros.get('nome') %}<p class="field-error" id="nome-error">{{ erros['nome'] }}</p>{% endif %}
+        </div>
+
+        <div class="form-field">
+          <label for="contato">Contato <span aria-hidden="true">*</span></label>
+          <input id="contato" name="contato" type="text" maxlength="120" required
+                 autocomplete="off" value="{{ dados.get('contato', '') }}"
+                 aria-invalid="{{ 'true' if erros.get('contato') else 'false' }}"
+                 aria-describedby="contato-help{% if erros.get('contato') %} contato-error{% endif %}"
+                 placeholder="Telefone ou e-mail">
+          <small id="contato-help">Informe um e-mail ou telefone válido.</small>
+          {% if erros.get('contato') %}<p class="field-error" id="contato-error">{{ erros['contato'] }}</p>{% endif %}
+        </div>
+
+        <div class="form-field full-width">
+          <label for="endereco">Endereço da coleta <span aria-hidden="true">*</span></label>
+          <input id="endereco" name="endereco" type="text" maxlength="250" required
+                 autocomplete="street-address" value="{{ dados.get('endereco', '') }}"
+                 aria-invalid="{{ 'true' if erros.get('endereco') else 'false' }}"
+                 aria-describedby="endereco-help{% if erros.get('endereco') %} endereco-error{% endif %}"
+                 placeholder="Rua, número, bairro e complemento">
+          <small id="endereco-help">Até 250 caracteres.</small>
+          {% if erros.get('endereco') %}<p class="field-error" id="endereco-error">{{ erros['endereco'] }}</p>{% endif %}
+        </div>
+
+        <div class="form-field">
+          <label for="tipo_material_id">Tipo de material <span aria-hidden="true">*</span></label>
+          <select id="tipo_material_id" name="tipo_material_id" required
+                  aria-invalid="{{ 'true' if erros.get('tipo_material_id') else 'false' }}"
+                  aria-describedby="material-help{% if erros.get('tipo_material_id') %} material-error{% endif %}">
+            <option value="">Selecione o material</option>
+            {% for tipo in tipos_materiais %}
+              <option value="{{ tipo['id_tipo_material'] }}"
+                {% if dados.get('tipo_material_id', '')|string == tipo['id_tipo_material']|string %}selected{% endif %}>
+                {{ tipo['nome'] }}
+              </option>
+            {% endfor %}
+          </select>
+          <small id="material-help">Escolha uma das opções disponíveis.</small>
+          {% if erros.get('tipo_material_id') %}<p class="field-error" id="material-error">{{ erros['tipo_material_id'] }}</p>{% endif %}
+        </div>
+
+        <div class="form-field">
+          <label for="data_solicitacao">Data da solicitação</label>
+          <input id="data_solicitacao" type="text" value="Preenchida automaticamente ao salvar"
+                 disabled aria-disabled="true">
+          <small>A data e a hora são registradas pelo banco de dados.</small>
+        </div>
+      </div>
+
+      <p class="required-note">* Campos obrigatórios</p>
+      <div class="form-hint" role="note">
+        <strong>Antes de salvar</strong>
+        <span>Confira o endereço e o tipo de material para evitar informações incorretas.</span>
+      </div>
+
+      <div class="form-actions">
+        <a class="button button-secondary" href="{{ url_for('main.index') }}">Cancelar</a>
+        <button class="button button-primary" type="submit">Salvar solicitação</button>
+      </div>
+    </form>
+  </section>
+
+  <aside class="summary-column">
+    <section class="summary-card">
+      <h2>Resumo do pedido</h2>
+      <p class="form-intro">O que será registrado</p>
+      <ul class="summary-list">
+        <li><span class="summary-symbol" aria-hidden="true">+</span>Dados do solicitante</li>
+        <li><span class="summary-symbol" aria-hidden="true">⌂</span>Endereço da coleta</li>
+        <li><span class="summary-symbol" aria-hidden="true">↻</span>Tipo de material e data</li>
+      </ul>
+      <div class="initial-status"><span>Status inicial</span><strong>Pendente</strong></div>
+    </section>
+    <section class="summary-card tip-card">
+      <h2>Dica de preenchimento</h2>
+      <p>Informe um contato válido para que o responsável consiga esclarecer dúvidas sobre a solicitação, se necessário.</p>
+    </section>
+  </aside>
+</div>
+{% endblock %}

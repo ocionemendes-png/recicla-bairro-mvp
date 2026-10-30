@@ -1,95 +1,75 @@
-# Como executar o Recicla Bairro no Windows
+# Atualizar e executar o Recicla Bairro no Windows
 
-Este roteiro utiliza o repositório GitHub já criado:
-https://github.com/ocionemendes-png/recicla-bairro-mvp
+Este roteiro parte do princípio de que o repositório já foi clonado em:
 
-## 1. Clonar o repositório
-
-Abra o PowerShell e execute:
-
-```powershell
-cd $HOME\Documents
-git clone https://github.com/ocionemendes-png/recicla-bairro-mvp.git
-cd recicla-bairro-mvp
+```text
+C:\Users\SEU_USUARIO\Documents\recicla-bairro-mvp
 ```
 
-Se a pasta já existir no computador, entre nela com `cd` em vez de clonar novamente.
+O pacote de atualização não contém a pasta `.git` nem o banco SQLite local. Assim, a ligação com o GitHub e os dados já existentes serão preservados.
 
-## 2. Copiar os arquivos do pacote inicial
+## 1. Substituir os arquivos do projeto
 
-1. Baixe `recicla-bairro-mvp-inicial.zip`.
-2. Extraia o conteúdo da pasta `recicla-bairro-mvp` para dentro da pasta local `recicla-bairro-mvp` que foi clonada.
-3. Quando o Windows perguntar se deseja substituir o `README.md`, escolha substituir.
-4. **Não apague nem substitua a pasta oculta `.git`**. Ela contém a ligação com o GitHub.
+1. Pare o servidor Flask, se estiver aberto, pressionando `Ctrl+C` no PowerShell que o executa.
+2. Baixe o arquivo `recicla-bairro-cadastro-v2.zip`.
+3. Extraia o conteúdo para `C:\Users\SEU_USUARIO\Documents`.
+4. Quando o Windows perguntar se deseja substituir arquivos existentes, escolha substituir.
+5. Não apague a pasta oculta `.git` e não exclua `instance\recicla.sqlite3`.
 
-## 3. Confirmar o Python e preparar o ambiente
+## 2. Entrar na pasta e inicializar os tipos de material
 
-No PowerShell, dentro da pasta do repositório:
-
-```powershell
-py -3.13 --version
-py -3.13 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -r requirements-dev.txt
-```
-
-Se o PowerShell bloquear a ativação do ambiente virtual, execute apenas nesta janela:
+Abra o PowerShell:
 
 ```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\.venv\Scripts\Activate.ps1
+cd $HOME\Documents\recicla-bairro-mvp
 ```
 
-Não é necessário alterar a política permanente do Windows.
-
-## 4. Inicializar o banco e executar os testes
+Execute novamente a inicialização do banco. Ela cria as tabelas caso ainda não existam e inclui os tipos Papel, Plástico, Vidro e Metal sem duplicá-los:
 
 ```powershell
-flask --app run init-db
-python -m pytest -q
+.\.venv\Scripts\python.exe -m flask --app run init-db
 ```
 
-O teste deverá apresentar três casos aprovados. Se aparecer erro, copie a mensagem completa e encaminhe para análise antes de fazer o commit.
-
-## 5. Abrir a aplicação
+## 3. Executar os testes
 
 ```powershell
-python run.py
+.\.venv\Scripts\python.exe -m pytest -q
 ```
 
-Abra `http://127.0.0.1:5000/` no navegador. Para verificar o endpoint de saúde, acesse `http://127.0.0.1:5000/health`.
+Resultado esperado nesta versão: `11 passed`. Se algum teste falhar, guarde a mensagem completa e corrija antes do commit.
 
-Para parar o servidor, volte ao PowerShell e pressione `Ctrl+C`.
+## 4. Executar a aplicação
 
-## 6. Criar o primeiro commit
+```powershell
+.\.venv\Scripts\python.exe run.py
+```
 
-Somente depois que os testes passarem:
+Abra no navegador:
+
+- Página inicial: http://127.0.0.1:5000/
+- Cadastro: http://127.0.0.1:5000/solicitacoes/nova
+- Verificação: http://127.0.0.1:5000/health
+
+Use apenas dados demonstrativos, por exemplo `Carlos Exemplo`, `carlos.exemplo@teste.invalid`, `Rua das Acácias, 100` e material `Papel`. Não use dados pessoais reais.
+
+Depois de salvar, a aplicação deverá apresentar o identificador SOL seguido do número gerado, os dados registrados e o status inicial Pendente.
+
+## 5. Criar o segundo commit
+
+Depois de confirmar os testes e executar um cadastro demonstrativo:
 
 ```powershell
 git status
 git add .
-git commit -m "feat: criar estrutura inicial da aplicação Flask"
+git commit -m "feat: implementar banco SQLite e cadastro de solicitações"
 git push origin main
+git log -1 --oneline
 ```
 
-Se o Git solicitar identificação e ela ainda não estiver configurada, informe seu nome e um e-mail associado à sua conta GitHub:
+Copie SHA, mensagem e data do commit efetivamente publicado para a atividade acadêmica. Não invente identificadores ou datas.
 
-```powershell
-git config user.name "Seu nome"
-git config user.email "Seu e-mail do GitHub"
-```
+## Observação sobre data e horário
 
-Essas configurações são locais ao repositório.
-
-## 7. Registrar o commit na atividade
-
-Depois do `git push`:
-
-1. Abra o repositório no GitHub.
-2. Clique em **Commits**.
-3. Abra o commit mais recente.
-4. Copie os primeiros 7 caracteres do SHA.
-5. Registre a mensagem e a data efetivamente exibidas.
-
-Não invente SHA nem data. A plataforma da atividade deve receber os dados do commit real.
+O SQLite registra `CURRENT_TIMESTAMP` em UTC. A aplicação converte esse valor
+para o horário de Brasília (UTC-03) somente na tela de confirmação. Portanto,
+o dado original do banco permanece em UTC.
