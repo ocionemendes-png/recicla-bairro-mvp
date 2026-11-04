@@ -1,8 +1,12 @@
 """Testes de cadastro e persistência de solicitações."""
 
 import re
+import sqlite3
+
+import pytest
 
 from app.database import get_db, init_db
+from app.models.solicitacao import criar_solicitacao
 
 
 def token_csrf(client) -> str:
@@ -302,3 +306,26 @@ def test_atualizacao_de_solicitacao_inexistente_retorna_404(client):
         data={"csrf_token": csrf, "status": "em andamento"},
     )
     assert response.status_code == 404
+
+
+
+def test_cadastro_reverte_solicitante_quando_insercao_da_solicitacao_falha(app):
+    """A falha na segunda inserção não pode deixar um solicitante órfão."""
+    with app.app_context():
+        with pytest.raises(sqlite3.IntegrityError):
+            criar_solicitacao(
+                nome="Teste de rollback",
+                contato="rollback@teste.invalid",
+                endereco="Rua de Teste, 10",
+                tipo_material_id=9999,
+            )
+
+        total_solicitantes = get_db().execute(
+            "SELECT COUNT(*) AS total FROM Solicitante"
+        ).fetchone()["total"]
+        total_solicitacoes = get_db().execute(
+            "SELECT COUNT(*) AS total FROM SolicitacaoColeta"
+        ).fetchone()["total"]
+
+    assert total_solicitantes == 0
+    assert total_solicitacoes == 0

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-
 from app.database import get_db
 
 
@@ -41,25 +39,29 @@ def criar_solicitacao(
     a transação poderá ser revertida pelo chamador.
     """
     db = get_db()
-    cursor_solicitante = db.execute(
-        """
-        INSERT INTO Solicitante (nome, contato)
-        VALUES (?, ?)
-        """,
-        (nome, contato),
-    )
-    solicitante_id = cursor_solicitante.lastrowid
+    # O contexto da conexão confirma a transação ao concluir e faz rollback
+    # automático se qualquer uma das inserções falhar.
+    with db:
+        cursor_solicitante = db.execute(
+            """
+            INSERT INTO Solicitante (nome, contato)
+            VALUES (?, ?)
+            """,
+            (nome, contato),
+        )
+        solicitante_id = cursor_solicitante.lastrowid
 
-    cursor_solicitacao = db.execute(
-        """
-        INSERT INTO SolicitacaoColeta
-            (id_solicitante, id_tipo_material, endereco, status)
-        VALUES (?, ?, ?, 'pendente')
-        """,
-        (solicitante_id, tipo_material_id, endereco),
-    )
-    db.commit()
-    return int(cursor_solicitacao.lastrowid)
+        cursor_solicitacao = db.execute(
+            """
+            INSERT INTO SolicitacaoColeta
+                (id_solicitante, id_tipo_material, endereco, status)
+            VALUES (?, ?, ?, 'pendente')
+            """,
+            (solicitante_id, tipo_material_id, endereco),
+        )
+        solicitacao_id = cursor_solicitacao.lastrowid
+
+    return int(solicitacao_id)
 
 
 def buscar_solicitacao(solicitacao_id: int):
@@ -143,6 +145,9 @@ TRANSICOES_STATUS = {
     "em andamento": {"concluída"},
     "concluída": set(),
 }
+
+# Fonte única dos estados aceitos pelas rotas e pela persistência.
+STATUS_PERMITIDOS = tuple(TRANSICOES_STATUS)
 
 
 def atualizar_status_solicitacao(solicitacao_id: int, novo_status: str) -> bool:
