@@ -18,6 +18,7 @@ from app.models.solicitacao import (
     listar_solicitacoes,
     listar_tipos_materiais,
     tipo_material_ativo,
+    STATUS_PERMITIDOS,
 )
 
 solicitacoes_bp = Blueprint("solicitacoes", __name__, url_prefix="/solicitacoes")
@@ -25,7 +26,6 @@ solicitacoes_bp = Blueprint("solicitacoes", __name__, url_prefix="/solicitacoes"
 MAX_NOME = 120
 MAX_CONTATO = 120
 MAX_ENDERECO = 250
-STATUS_PERMITIDOS = ("pendente", "em andamento", "concluída")
 EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 
 
