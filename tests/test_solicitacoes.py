@@ -182,3 +182,123 @@ def test_detalhes_da_solicitacao_podem_ser_abertos_pela_lista(client):
     assert "Carlos Exemplo" in html
     assert "Pendente" in html
     assert "Voltar às solicitações" in html
+
+
+def test_detalhes_exibem_formulario_de_atualizacao_com_csrf(client):
+    cadastrar_pedido_teste(client, "Ana Exemplo")
+    response = client.get("/solicitacoes/1")
+    html = response.get_data(as_text=True)
+
+    assert response.status_code == 200
+    assert "Atualizar status da coleta" in html
+    assert 'name="csrf_token"' in html
+    assert "Em andamento" in html
+
+
+def test_atualizacao_para_em_andamento_persiste_e_reflete_na_lista(app, client):
+    cadastrar_pedido_teste(client, "Ana Exemplo")
+    csrf = token_csrf(client)
+
+    response = client.post(
+        "/solicitacoes/1/status",
+        data={"csrf_token": csrf, "status": "em andamento"},
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert "Status atualizado para Em andamento com sucesso." in response.get_data(as_text=True)
+    assert "Em andamento" in response.get_data(as_text=True)
+
+    with app.app_context():
+        row = get_db().execute(
+            "SELECT status FROM SolicitacaoColeta WHERE id_solicitacao = 1"
+        ).fetchone()
+    assert row["status"] == "em andamento"
+
+    lista = client.get("/solicitacoes?status=em%20andamento")
+    assert lista.status_code == 200
+    assert "SOL-0001" in lista.get_data(as_text=True)
+
+
+def test_atualizacao_para_concluida_persiste_e_remove_opcoes(app, client):
+    cadastrar_pedido_teste(client, "Ana Exemplo")
+    csrf = token_csrf(client)
+
+    response = client.post(
+        "/solicitacoes/1/status",
+        data={"csrf_token": csrf, "status": "concluída"},
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "Status atualizado para Concluída com sucesso." in html
+    assert "Esta solicitação já foi concluída" in html
+    assert 'id="novo-status"' not in html
+
+    with app.app_context():
+        row = get_db().execute(
+            "SELECT status FROM SolicitacaoColeta WHERE id_solicitacao = 1"
+        ).fetchone()
+    assert row["status"] == "concluída"
+
+
+def test_atualizacao_rejeita_status_desconhecido_sem_alterar_banco(app, client):
+    cadastrar_pedido_teste(client, "Ana Exemplo")
+    csrf = token_csrf(client)
+
+    response = client.post(
+        "/solicitacoes/1/status",
+        data={"csrf_token": csrf, "status": "cancelada"},
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert "A mudança de status selecionada não é permitida" in response.get_data(as_text=True)
+    with app.app_context():
+        row = get_db().execute(
+            "SELECT status FROM SolicitacaoColeta WHERE id_solicitacao = 1"
+        ).fetchone()
+    assert row["status"] == "pendente"
+
+
+def test_atualizacao_exige_token_csrf(client):
+    cadastrar_pedido_teste(client, "Ana Exemplo")
+    response = client.post(
+        "/solicitacoes/1/status",
+        data={"status": "em andamento"},
+    )
+    assert response.status_code == 400
+
+
+def test_atualizacao_rejeita_retrocesso_de_status(app, client):
+    cadastrar_pedido_teste(client, "Ana Exemplo")
+    csrf = token_csrf(client)
+    client.post(
+        "/solicitacoes/1/status",
+        data={"csrf_token": csrf, "status": "concluída"},
+    )
+
+    response = client.post(
+        "/solicitacoes/1/status",
+        data={"csrf_token": csrf, "status": "pendente"},
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert "A mudança de status selecionada não é permitida" in response.get_data(as_text=True)
+    with app.app_context():
+        row = get_db().execute(
+            "SELECT status FROM SolicitacaoColeta WHERE id_solicitacao = 1"
+        ).fetchone()
+    assert row["status"] == "concluída"
+
+
+def test_atualizacao_de_solicitacao_inexistente_retorna_404(client):
+    # Obtém um token válido antes de consultar o recurso inexistente.
+    csrf = token_csrf(client)
+    response = client.post(
+        "/solicitacoes/999/status",
+        data={"csrf_token": csrf, "status": "em andamento"},
+    )
+    assert response.status_code == 404

@@ -139,13 +139,22 @@ A consulta está disponível em `/solicitacoes` e inclui:
 - Acesso à página de detalhes de cada solicitação.
 - Tratamento de filtro inválido e estado vazio da listagem.
 
+## Funcionalidade implementada nesta versão: atualização de status
+
+Na página de detalhes da solicitação, o responsável pode registrar a próxima situação do pedido. As transições são controladas no servidor e persistidas no SQLite:
+
+- `pendente` pode avançar para `em andamento` ou `concluída`;
+- `em andamento` pode avançar para `concluída`;
+- `concluída` é um estado final nesta versão e não permite retrocesso.
+
+O formulário utiliza token CSRF. O servidor rejeita estados desconhecidos, transições não permitidas e pedidos inexistentes. A listagem e a página de detalhes passam a refletir o status gravado.
+
 ## Próximas entregas planejadas
 
-1. Implementar atualização do status das solicitações.
-2. Implementar autenticação e controles de acesso.
-3. Ampliar testes unitários e de integração.
-4. Configurar integração contínua com GitHub Actions.
-5. Evoluir a interface e avaliar o fluxo com participantes externos, mediante concordância.
+1. Ampliar testes unitários e de integração.
+2. Configurar integração contínua com GitHub Actions.
+3. Implementar autenticação e controles de acesso antes de qualquer uso operacional.
+4. Evoluir a interface e avaliar o fluxo com participantes externos, mediante concordância.
 
 ## Observação acadêmica
 

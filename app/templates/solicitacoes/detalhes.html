@@ -41,4 +41,39 @@
     <a class="button button-primary" href="{{ url_for('solicitacoes.nova') }}">Cadastrar outra solicitação</a>
   </div>
 </section>
+
+<section class="status-update-card" aria-labelledby="status-update-title">
+  <div>
+    <h2 id="status-update-title">Atualizar status da coleta</h2>
+    <p class="form-intro">Selecione a próxima situação do pedido para registrar o andamento.</p>
+  </div>
+
+  {% if status_opcoes %}
+    <form method="post" action="{{ url_for('solicitacoes.atualizar_status', solicitacao_id=solicitacao['id_solicitacao']) }}" class="status-update-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="form-field">
+        <label for="novo-status">Novo status</label>
+        <select id="novo-status" name="status" required>
+          <option value="" selected disabled>Selecione o status</option>
+          {% for opcao in status_opcoes %}
+            <option value="{{ opcao }}">{{ {'em andamento': 'Em andamento', 'concluída': 'Concluída'}[opcao] }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <p class="status-update-help">A alteração será gravada no banco de dados após a confirmação.</p>
+      <div class="confirmation-actions">
+        <a class="button button-secondary" href="{{ url_for('solicitacoes.listar') }}">Voltar às solicitações</a>
+        <button class="button button-primary" type="submit">Salvar alteração</button>
+      </div>
+    </form>
+  {% else %}
+    <div class="status-final-note" role="status">
+      Esta solicitação já foi concluída. Não há novas etapas disponíveis para atualização.
+    </div>
+    <div class="confirmation-actions">
+      <a class="button button-secondary" href="{{ url_for('solicitacoes.listar') }}">Voltar às solicitações</a>
+      <a class="button button-primary" href="{{ url_for('solicitacoes.nova') }}">Cadastrar outra solicitação</a>
+    </div>
+  {% endif %}
+</section>
 {% endblock %}

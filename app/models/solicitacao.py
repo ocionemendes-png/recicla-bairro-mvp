@@ -134,3 +134,48 @@ def contar_solicitacoes_por_status() -> dict[str, int]:
             totais[row["status"]] = int(row["quantidade"])
     totais["total"] = sum(totais.values())
     return totais
+
+
+# Transições permitidas no fluxo simplificado do MVP. Uma solicitação
+# concluída é terminal nesta versão e não pode voltar a uma etapa anterior.
+TRANSICOES_STATUS = {
+    "pendente": {"em andamento", "concluída"},
+    "em andamento": {"concluída"},
+    "concluída": set(),
+}
+
+
+def atualizar_status_solicitacao(solicitacao_id: int, novo_status: str) -> bool:
+    """Atualiza o status se a transição for permitida.
+
+    Retorna False quando o pedido não existe. Transições inválidas geram
+    ValueError e não modificam o banco.
+    """
+    db = get_db()
+    atual = db.execute(
+        "SELECT status FROM SolicitacaoColeta WHERE id_solicitacao = ?",
+        (solicitacao_id,),
+    ).fetchone()
+
+    if atual is None:
+        return False
+
+    status_atual = atual["status"]
+    permitidos = TRANSICOES_STATUS.get(status_atual, set())
+    if novo_status not in permitidos:
+        raise ValueError("A transição de status solicitada não é permitida.")
+
+    cursor = db.execute(
+        """
+        UPDATE SolicitacaoColeta
+        SET status = ?
+        WHERE id_solicitacao = ? AND status = ?
+        """,
+        (novo_status, solicitacao_id, status_atual),
+    )
+    if cursor.rowcount != 1:
+        db.rollback()
+        return False
+
+    db.commit()
+    return True

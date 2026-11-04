@@ -858,3 +858,76 @@ h1 {
   .request-summary { gap: 9px; }
   .request-summary-card { padding: 14px; }
 }
+
+
+/* Atualização controlada do status da solicitação */
+.status-update-card {
+  margin-top: 20px;
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  background: var(--surface);
+  box-shadow: 0 5px 18px rgb(28 55 82 / 4%);
+}
+
+.status-update-card h2 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.status-update-form {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  align-items: end;
+  gap: 16px;
+}
+
+.status-update-form .form-field select {
+  width: 100%;
+  min-height: 46px;
+  padding: 11px 13px;
+  border: 1px solid #cfdae7;
+  border-radius: 9px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+}
+
+.status-update-help {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 9px;
+  background: #f4f7fb;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.status-update-form .confirmation-actions,
+.status-final-note + .confirmation-actions {
+  grid-column: 1 / -1;
+  margin-top: 2px;
+}
+
+.status-final-note {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: var(--green-soft);
+  color: #27684d;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+@media (max-width: 640px) {
+  .status-update-card { padding: 20px; }
+  .status-update-form { grid-template-columns: 1fr; }
+  .status-update-form .confirmation-actions,
+  .status-final-note + .confirmation-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+  .status-update-form .confirmation-actions .button,
+  .status-final-note + .confirmation-actions .button { width: 100%; }
+}

@@ -11,6 +11,8 @@ from flask import Blueprint, abort, flash, redirect, render_template, request, s
 
 from app.models.solicitacao import (
     buscar_solicitacao,
+    atualizar_status_solicitacao,
+    TRANSICOES_STATUS,
     contar_solicitacoes_por_status,
     criar_solicitacao,
     listar_solicitacoes,
@@ -165,4 +167,42 @@ def detalhes(solicitacao_id: int):
     solicitacao = buscar_solicitacao(solicitacao_id)
     if solicitacao is None:
         abort(404)
-    return render_template("solicitacoes/detalhes.html", solicitacao=solicitacao)
+    status_opcoes = sorted(
+        TRANSICOES_STATUS.get(solicitacao["status"], set()),
+        key=lambda valor: (valor != "em andamento", valor),
+    )
+    return render_template(
+        "solicitacoes/detalhes.html",
+        solicitacao=solicitacao,
+        status_opcoes=status_opcoes,
+        csrf_token=obter_token_csrf(),
+    )
+
+
+@solicitacoes_bp.post("/<int:solicitacao_id>/status")
+def atualizar_status(solicitacao_id: int):
+    """Valida e persiste uma mudança de status da solicitação."""
+    if not validar_token_csrf(request.form.get("csrf_token")):
+        abort(400, description="O formulário expirou. Atualize a página e tente novamente.")
+
+    solicitacao = buscar_solicitacao(solicitacao_id)
+    if solicitacao is None:
+        abort(404)
+
+    novo_status = request.form.get("status", "").strip().lower()
+    try:
+        atualizada = atualizar_status_solicitacao(solicitacao_id, novo_status)
+    except ValueError:
+        flash("A mudança de status selecionada não é permitida. Confira a etapa atual do pedido.", "error")
+        return redirect(url_for("solicitacoes.detalhes", solicitacao_id=solicitacao_id), code=303)
+
+    if not atualizada:
+        abort(404)
+
+    rotulos = {
+        "pendente": "Pendente",
+        "em andamento": "Em andamento",
+        "concluída": "Concluída",
+    }
+    flash(f"Status atualizado para {rotulos[novo_status]} com sucesso.", "success")
+    return redirect(url_for("solicitacoes.detalhes", solicitacao_id=solicitacao_id), code=303)
