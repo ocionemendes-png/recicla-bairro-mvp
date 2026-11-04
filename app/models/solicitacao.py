@@ -83,3 +83,54 @@ def buscar_solicitacao(solicitacao_id: int):
         """,
         (solicitacao_id,),
     ).fetchone()
+
+
+
+def listar_solicitacoes(status: str | None = None) -> list:
+    """Lista solicitações com dados do solicitante e do tipo de material.
+
+    O filtro de status é parametrizado para evitar interpolação de valores
+    recebidos pela URL diretamente no SQL.
+    """
+    db = get_db()
+    consulta = """
+        SELECT
+            sc.id_solicitacao,
+            sc.data_solicitacao,
+            sc.status,
+            sc.endereco,
+            s.nome AS nome_solicitante,
+            tm.nome AS tipo_material
+        FROM SolicitacaoColeta AS sc
+        INNER JOIN Solicitante AS s
+            ON s.id_solicitante = sc.id_solicitante
+        INNER JOIN TipoMaterial AS tm
+            ON tm.id_tipo_material = sc.id_tipo_material
+    """
+    parametros: tuple = ()
+    if status is not None:
+        consulta += " WHERE sc.status = ?"
+        parametros = (status,)
+    consulta += " ORDER BY sc.data_solicitacao DESC, sc.id_solicitacao DESC"
+    return db.execute(consulta, parametros).fetchall()
+
+
+def contar_solicitacoes_por_status() -> dict[str, int]:
+    """Retorna a quantidade de pedidos em cada situação permitida."""
+    totais = {
+        "pendente": 0,
+        "em andamento": 0,
+        "concluída": 0,
+    }
+    rows = get_db().execute(
+        """
+        SELECT status, COUNT(*) AS quantidade
+        FROM SolicitacaoColeta
+        GROUP BY status
+        """
+    ).fetchall()
+    for row in rows:
+        if row["status"] in totais:
+            totais[row["status"]] = int(row["quantidade"])
+    totais["total"] = sum(totais.values())
+    return totais

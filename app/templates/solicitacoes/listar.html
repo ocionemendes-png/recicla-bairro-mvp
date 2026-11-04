@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Solicitações | Recicla Bairro{% endblock %}
+
+{% block content %}
+<section class="page-heading list-heading">
+  <div>
+    <p class="eyebrow">PAINEL / SOLICITAÇÕES</p>
+    <h1>Solicitações de coleta</h1>
+    <p class="lead">Consulte os pedidos registrados e acompanhe a situação de cada coleta.</p>
+  </div>
+  <a class="button button-primary" href="{{ url_for('solicitacoes.nova') }}">Nova solicitação</a>
+</section>
+
+<section class="request-summary" aria-label="Resumo das solicitações">
+  <article class="request-summary-card">
+    <span>Total de solicitações</span>
+    <strong>{{ totais['total'] }}</strong>
+  </article>
+  <article class="request-summary-card">
+    <span>Pendentes</span>
+    <strong>{{ totais['pendente'] }}</strong>
+  </article>
+  <article class="request-summary-card">
+    <span>Em andamento</span>
+    <strong>{{ totais['em andamento'] }}</strong>
+  </article>
+  <article class="request-summary-card">
+    <span>Concluídas</span>
+    <strong>{{ totais['concluída'] }}</strong>
+  </article>
+</section>
+
+<section class="request-list-card">
+  <div class="request-list-header">
+    <div>
+      <h2>Pedidos registrados</h2>
+      <p class="form-intro">Os dados exibidos vêm do banco SQLite local.</p>
+    </div>
+    <form class="filter-form" method="get" action="{{ url_for('solicitacoes.listar') }}">
+      <label for="status-filter">Filtrar por status</label>
+      <select id="status-filter" name="status">
+        <option value="todos" {% if status_selecionado == 'todos' %}selected{% endif %}>Todos</option>
+        <option value="pendente" {% if status_selecionado == 'pendente' %}selected{% endif %}>Pendente</option>
+        <option value="em andamento" {% if status_selecionado == 'em andamento' %}selected{% endif %}>Em andamento</option>
+        <option value="concluída" {% if status_selecionado == 'concluída' %}selected{% endif %}>Concluída</option>
+      </select>
+      <button class="button button-secondary" type="submit">Filtrar</button>
+    </form>
+  </div>
+
+  {% if solicitacoes %}
+    <div class="table-scroll">
+      <table class="request-table">
+        <thead>
+          <tr>
+            <th scope="col">Solicitação</th>
+            <th scope="col">Solicitante</th>
+            <th scope="col">Material</th>
+            <th scope="col">Endereço</th>
+            <th scope="col">Status</th>
+            <th scope="col">Data</th>
+            <th scope="col"><span class="sr-only">Ação</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in solicitacoes %}
+            <tr>
+              <td><strong>SOL-{{ '%04d'|format(item['id_solicitacao']) }}</strong></td>
+              <td>{{ item['nome_solicitante'] }}</td>
+              <td>{{ item['tipo_material'] }}</td>
+              <td>{{ item['endereco'] }}</td>
+              <td>
+                {% if item['status'] == 'pendente' %}
+                  <span class="request-status-badge status-pendente">Pendente</span>
+                {% elif item['status'] == 'em andamento' %}
+                  <span class="request-status-badge status-em-andamento">Em andamento</span>
+                {% else %}
+                  <span class="request-status-badge status-concluida">Concluída</span>
+                {% endif %}
+              </td>
+              <td>{{ item['data_solicitacao']|datetime_br }}</td>
+              <td><a class="table-link" href="{{ url_for('solicitacoes.detalhes', solicitacao_id=item['id_solicitacao']) }}">Ver detalhes</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <h3>Nenhuma solicitação encontrada</h3>
+      {% if status_selecionado == 'todos' %}
+        <p>Quando um pedido for cadastrado, ele aparecerá nesta lista.</p>
+        <a class="button button-primary" href="{{ url_for('solicitacoes.nova') }}">Cadastrar primeira solicitação</a>
+      {% else %}
+        <p>Não há pedidos com o status selecionado. Altere o filtro para consultar outras solicitações.</p>
+        <a class="button button-secondary" href="{{ url_for('solicitacoes.listar') }}">Limpar filtro</a>
+      {% endif %}
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

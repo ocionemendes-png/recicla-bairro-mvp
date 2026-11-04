@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}Solicitação {{ '%04d'|format(solicitacao['id_solicitacao']) }} | Recicla Bairro{% endblock %}
+{% block title %}Detalhes da solicitação {{ '%04d'|format(solicitacao['id_solicitacao']) }} | Recicla Bairro{% endblock %}
 
 {% block content %}
 <section class="page-heading">
-  <p class="eyebrow">SOLICITAÇÕES / CONFIRMAÇÃO DO CADASTRO</p>
-  <h1>Solicitação cadastrada</h1>
-  <p class="lead">O pedido foi registrado e já pode ser consultado.</p>
+  <p class="eyebrow">SOLICITAÇÕES / DETALHES DO PEDIDO</p>
+  <h1>Detalhes da solicitação</h1>
+  <p class="lead">Confira as informações registradas e a situação atual do pedido.</p>
 </section>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -21,7 +21,13 @@
       <p class="eyebrow">IDENTIFICAÇÃO DO PEDIDO</p>
       <h2>SOL-{{ '%04d'|format(solicitacao['id_solicitacao']) }}</h2>
     </div>
-    <span class="status-badge">Pendente</span>
+    {% if solicitacao['status'] == 'pendente' %}
+      <span class="request-status-badge status-pendente">Pendente</span>
+    {% elif solicitacao['status'] == 'em andamento' %}
+      <span class="request-status-badge status-em-andamento">Em andamento</span>
+    {% else %}
+      <span class="request-status-badge status-concluida">Concluída</span>
+    {% endif %}
   </div>
   <div class="detail-grid">
     <div><span>Solicitante</span><strong>{{ solicitacao['nome_solicitante'] }}</strong></div>
@@ -31,7 +37,7 @@
     <div><span>Data da solicitação</span><strong>{{ solicitacao['data_solicitacao']|datetime_br }}</strong></div>
   </div>
   <div class="confirmation-actions">
-    <a class="button button-secondary" href="{{ url_for('main.index') }}">Voltar ao início</a>
+    <a class="button button-secondary" href="{{ url_for('solicitacoes.listar') }}">Voltar às solicitações</a>
     <a class="button button-primary" href="{{ url_for('solicitacoes.nova') }}">Cadastrar outra solicitação</a>
   </div>
 </section>

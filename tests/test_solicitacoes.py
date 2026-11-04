@@ -117,3 +117,68 @@ def test_cadastro_nao_cria_registro_quando_dados_sao_invalidos(app, client):
         ).fetchone()["total"]
 
     assert count == 0
+
+
+
+def cadastrar_pedido_teste(client, nome: str, material_id: str = "1") -> None:
+    """Cadastra um pedido de teste usando o formulário e seu token CSRF."""
+    csrf = token_csrf(client)
+    data = dados_validos(csrf)
+    data["nome"] = nome
+    data["tipo_material_id"] = material_id
+    response = client.post("/solicitacoes/nova", data=data)
+    assert response.status_code == 303
+
+
+def test_lista_de_solicitacoes_exibe_pedido_persistido(client):
+    cadastrar_pedido_teste(client, "Maria Exemplo")
+
+    response = client.get("/solicitacoes")
+    html = response.get_data(as_text=True)
+
+    assert response.status_code == 200
+    assert "Solicitações de coleta" in html
+    assert "SOL-0001" in html
+    assert "Maria Exemplo" in html
+    assert "Pendente" in html
+    assert "Ver detalhes" in html
+
+
+def test_lista_filtra_pelo_status_selecionado(app, client):
+    cadastrar_pedido_teste(client, "Maria Exemplo")
+    cadastrar_pedido_teste(client, "João Exemplo", material_id="2")
+
+    with app.app_context():
+        db = get_db()
+        db.execute(
+            "UPDATE SolicitacaoColeta SET status = ? WHERE id_solicitacao = ?",
+            ("concluída", 2),
+        )
+        db.commit()
+
+    response = client.get("/solicitacoes?status=conclu%C3%ADda")
+    html = response.get_data(as_text=True)
+
+    assert response.status_code == 200
+    assert "SOL-0002" in html
+    assert "João Exemplo" in html
+    assert "SOL-0001" not in html
+
+
+def test_lista_rejeita_filtro_de_status_desconhecido(client):
+    response = client.get("/solicitacoes?status=cancelada")
+
+    assert response.status_code == 400
+
+
+def test_detalhes_da_solicitacao_podem_ser_abertos_pela_lista(client):
+    cadastrar_pedido_teste(client, "Carlos Exemplo")
+
+    response = client.get("/solicitacoes/1")
+    html = response.get_data(as_text=True)
+
+    assert response.status_code == 200
+    assert "Detalhes da solicitação" in html
+    assert "Carlos Exemplo" in html
+    assert "Pendente" in html
+    assert "Voltar às solicitações" in html

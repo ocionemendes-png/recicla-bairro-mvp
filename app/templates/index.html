@@ -15,8 +15,8 @@
 <section class="notice" role="status">
   <span class="notice-icon" aria-hidden="true">i</span>
   <p>
-    O cadastro de solicitações já está disponível. A consulta e a atualização
-    dos pedidos serão implementadas nas próximas entregas.
+    O cadastro e a consulta de solicitações já estão disponíveis. A atualização
+    do status será implementada na próxima entrega.
   </p>
 </section>
 
@@ -38,8 +38,8 @@
   <article class="feature-card">
     <span class="feature-number">02</span>
     <h3>Consultar solicitações</h3>
-    <p>Visualizar os pedidos registrados e identificar sua situação.</p>
-    <span class="feature-state">Planejada</span>
+    <p>Visualizar os pedidos registrados e filtrar por situação.</p>
+    <a class="button button-primary feature-link" href="{{ url_for('solicitacoes.listar') }}">Consultar solicitações</a>
   </article>
 
   <article class="feature-card">

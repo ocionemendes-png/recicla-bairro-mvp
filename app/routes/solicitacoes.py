@@ -11,7 +11,9 @@ from flask import Blueprint, abort, flash, redirect, render_template, request, s
 
 from app.models.solicitacao import (
     buscar_solicitacao,
+    contar_solicitacoes_por_status,
     criar_solicitacao,
+    listar_solicitacoes,
     listar_tipos_materiais,
     tipo_material_ativo,
 )
@@ -21,6 +23,7 @@ solicitacoes_bp = Blueprint("solicitacoes", __name__, url_prefix="/solicitacoes"
 MAX_NOME = 120
 MAX_CONTATO = 120
 MAX_ENDERECO = 250
+STATUS_PERMITIDOS = ("pendente", "em andamento", "concluída")
 EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 
 
@@ -86,6 +89,25 @@ def validar_formulario(form) -> tuple[dict, dict, int | None]:
             erros["tipo_material_id"] = "Selecione um tipo de material válido."
 
     return dados, erros, tipo_material_id
+
+
+@solicitacoes_bp.get("/", strict_slashes=False)
+def listar():
+    """Apresenta os pedidos registrados e permite filtrar por situação."""
+    status_selecionado = request.args.get("status", "todos").strip().lower()
+    if status_selecionado not in ("todos", *STATUS_PERMITIDOS):
+        abort(400, description="O filtro de status informado não é válido.")
+
+    filtro = None if status_selecionado == "todos" else status_selecionado
+    solicitacoes = listar_solicitacoes(status=filtro)
+    totais = contar_solicitacoes_por_status()
+
+    return render_template(
+        "solicitacoes/listar.html",
+        solicitacoes=solicitacoes,
+        status_selecionado=status_selecionado,
+        totais=totais,
+    )
 
 
 @solicitacoes_bp.route("/nova", methods=["GET", "POST"])

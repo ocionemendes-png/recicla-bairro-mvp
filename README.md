@@ -2,7 +2,7 @@
 
 Projeto acadêmico de software para apoiar o cadastro, a consulta e o acompanhamento de solicitações de coleta seletiva.
 
-> **Estado atual:** cadastro de solicitações implementado. A consulta geral e a atualização dos pedidos serão desenvolvidas nas próximas entregas. Os dados de demonstração são fictícios.
+> **Estado atual:** cadastro e consulta de solicitações implementados, com filtro por status e visualização dos detalhes. A atualização do status será desenvolvida na próxima entrega. Os dados de demonstração são fictícios.
 
 ## Tecnologias planejadas
 
@@ -50,6 +50,7 @@ python run.py
 Abra no navegador:
 
 - Página inicial: http://127.0.0.1:5000/
+- Consulta de solicitações: http://127.0.0.1:5000/solicitacoes
 - Cadastro de solicitação: http://127.0.0.1:5000/solicitacoes/nova
 - Verificação de funcionamento: http://127.0.0.1:5000/health
 
@@ -126,11 +127,21 @@ O cadastro de solicitações está disponível em `/solicitacoes/nova` e inclui:
 - Página de confirmação com identificador `SOL-0001` (numeração conforme o ID gerado).
 - Tipos iniciais de material: papel, plástico, vidro e metal.
 
-A confirmação do formulário representa um registro persistido no banco local; a consulta geral e a atualização de status ainda serão desenvolvidas em etapas posteriores.
+O cadastro representa um registro persistido no banco local. A consulta geral está disponível em `/solicitacoes`, com filtro por status e acesso à página de detalhes de cada pedido. A atualização de status será desenvolvida em etapa posterior.
+
+## Funcionalidade implementada nesta versão: consulta
+
+A consulta está disponível em `/solicitacoes` e inclui:
+
+- Listagem dos pedidos persistidos no SQLite, com identificação, solicitante, material, endereço, status e data.
+- Resumo das quantidades por status.
+- Filtro por todos, pendente, em andamento ou concluída.
+- Acesso à página de detalhes de cada solicitação.
+- Tratamento de filtro inválido e estado vazio da listagem.
 
 ## Próximas entregas planejadas
 
-1. Implementar consulta e atualização do status.
+1. Implementar atualização do status das solicitações.
 2. Implementar autenticação e controles de acesso.
 3. Ampliar testes unitários e de integração.
 4. Configurar integração contínua com GitHub Actions.
