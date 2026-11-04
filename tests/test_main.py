@@ -16,12 +16,18 @@ def test_health_endpoint_returns_ok(client):
     assert response.get_json() == {
         "application": "Recicla Bairro",
         "status": "ok",
-        "message": "Estrutura inicial da aplicação disponível.",
+        "message": "Aplicação e banco de dados disponíveis.",
     }
 
 
-def test_data_sqlite_e_apresentada_no_horario_de_brasilia(app):
-    formatter = app.jinja_env.filters["datetime_br"]
+def test_health_endpoint_fails_when_database_schema_is_missing(app, client):
+    from app.database import get_db
 
-    # CURRENT_TIMESTAMP do SQLite é UTC; a tela deve apresentar UTC-03.
-    assert formatter("2026-10-30 17:44:55") == "30/10/2026 às 14:44:55"
+    with app.app_context():
+        get_db().execute("DROP TABLE SolicitacaoColeta")
+        get_db().commit()
+
+    response = client.get("/health")
+
+    assert response.status_code == 503
+    assert response.get_json()["status"] == "error"

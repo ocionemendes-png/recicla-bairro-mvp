@@ -1,26 +1,30 @@
 # Recicla Bairro MVP
 
-Projeto acadêmico de software para apoiar o cadastro, a consulta e o acompanhamento de solicitações de coleta seletiva.
+Aplicação acadêmica para cadastrar, consultar e acompanhar solicitações de coleta seletiva. O Coletivo Recicla Bairro é um cenário fictício de planejamento; os registros de demonstração não representam pedidos reais.
 
-> **Estado atual:** cadastro e consulta de solicitações implementados, com filtro por status e visualização dos detalhes. A atualização do status será desenvolvida na próxima entrega. Os dados de demonstração são fictícios.
+## Estado atual
 
-## Tecnologias planejadas
+O MVP implementa três fluxos principais:
+
+1. **Cadastro:** registro de solicitante, contato, endereço e tipo de material, com validação no servidor, proteção CSRF e gravação transacional no SQLite.
+2. **Consulta:** listagem dos pedidos, indicadores por status, filtro por situação e visualização dos detalhes.
+3. **Atualização de status:** transições controladas de Pendente para Em andamento ou Concluída; Em andamento pode avançar para Concluída. Concluída é um estado final.
+
+A interface inclui rótulos e foco visual para navegação por teclado. Não há autenticação de usuários nesta versão; por isso, o MVP deve permanecer demonstrativo e não receber dados pessoais ou solicitações operacionais reais.
+
+## Tecnologias
 
 - Python 3.13
 - Flask 3.1.3
-- CSS responsivo próprio (a adoção de Bootstrap poderá ser ampliada nas próximas entregas)
 - SQLite
-- pytest para testes automatizados
+- HTML5 e CSS próprio
+- Waitress como servidor WSGI de produção
+- pytest e pytest-cov para testes e cobertura
+- GitHub Actions para integração contínua
 
-## Requisitos
+## Executar localmente no Windows
 
-- Python 3.11 ou superior.
-- Git.
-- Acesso à internet para instalar as dependências.
-
-## Preparar o ambiente no Windows (PowerShell)
-
-Na pasta do repositório, execute:
+Na pasta do repositório, abra o PowerShell e execute:
 
 ```powershell
 py -3.13 -m venv .venv
@@ -29,44 +33,39 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements-dev.txt
 ```
 
-Se o comando `py -3.13` não estiver disponível, instale Python 3.13 ou ajuste o comando para uma versão compatível instalada no computador.
-
-## Inicializar o banco de dados
-
-Com o ambiente virtual ativado:
+Inicialize o banco local:
 
 ```powershell
 flask --app run init-db
 ```
 
-O banco SQLite será criado em `instance/recicla.sqlite3`. Esse arquivo é local e está excluído do Git pelo `.gitignore`.
-
-## Executar a aplicação
+Execute a aplicação para desenvolvimento:
 
 ```powershell
 python run.py
 ```
 
-Abra no navegador:
+Acesse:
 
 - Página inicial: http://127.0.0.1:5000/
-- Consulta de solicitações: http://127.0.0.1:5000/solicitacoes
-- Cadastro de solicitação: http://127.0.0.1:5000/solicitacoes/nova
-- Verificação de funcionamento: http://127.0.0.1:5000/health
+- Consulta: http://127.0.0.1:5000/solicitacoes
+- Cadastro: http://127.0.0.1:5000/solicitacoes/nova
+- Saúde da aplicação e do banco: http://127.0.0.1:5000/health
 
-O servidor embutido do Flask é destinado somente ao desenvolvimento local.
+O servidor de desenvolvimento do Flask é destinado apenas ao uso local.
 
-## Executar os testes
+## Testes e cobertura
 
-Em outro terminal, ou após parar o servidor com `Ctrl+C`:
+Com o ambiente virtual ativado:
 
 ```powershell
 python -m pytest -q
+python -m pytest --cov=app --cov-report=term-missing -q
 ```
 
-Os testes usam um banco temporário e não alteram o banco local da aplicação.
+Os testes usam banco temporário e não alteram o banco local da aplicação. A cobertura deve ser medida novamente após cada alteração; o percentual pode variar conforme o código e os testes presentes.
 
-## Estrutura inicial
+## Estrutura do projeto
 
 ```text
 recicla-bairro-mvp/
@@ -76,91 +75,51 @@ recicla-bairro-mvp/
 │   ├── database.py
 │   ├── schema.sql
 │   ├── routes/
-│   │   ├── __init__.py
 │   │   ├── main.py
 │   │   └── solicitacoes.py
 │   ├── models/
-│   │   ├── __init__.py
 │   │   └── solicitacao.py
 │   ├── templates/
-│   │   ├── base.html
-│   │   ├── index.html
-│   │   └── solicitacoes/
-│   │       ├── nova.html
-│   │       └── detalhes.html
-│   └── static/
-│       └── css/
-│           └── style.css
+│   └── static/css/
 ├── tests/
-│   ├── conftest.py
-│   ├── test_main.py
-│   ├── test_database.py
-│   └── test_solicitacoes.py
 ├── instance/
 ├── requirements.txt
 ├── requirements-dev.txt
-├── .env.example
-└── .gitignore
+└── .python-version
 ```
 
-## Modelo de dados inicial
+O banco local fica em `instance/recicla.sqlite3` e é excluído do Git pelo `.gitignore`.
 
-O esquema SQLite contempla as quatro entidades definidas no planejamento:
+## Publicação no Railway
 
-- `Solicitante`
-- `TipoMaterial`
-- `UsuarioResponsavel`
-- `SolicitacaoColeta`
+A configuração abaixo prepara a aplicação para ser publicada no Railway. Não coloque chaves ou segredos no repositório.
 
-As restrições do banco incluem campos obrigatórios, identificadores, chaves estrangeiras e os status permitidos: `pendente`, `em andamento` e `concluída`.
+1. Conecte o repositório público `ocionemendes-png/recicla-bairro-mvp` a um serviço Railway.
+2. Crie um Volume para o serviço e defina o ponto de montagem como `/data`.
+3. Configure as variáveis do serviço:
 
-## Funcionalidade implementada nesta versão
+   - `RECICLA_DATABASE=/data/recicla.sqlite3`
+   - `RECICLA_SECRET_KEY`: uma chave aleatória forte, criada para o ambiente de produção e mantida somente nas variáveis do Railway.
 
-O cadastro de solicitações está disponível em `/solicitacoes/nova` e inclui:
+4. Configure o Start Command do serviço:
 
-- Campos obrigatórios para nome, contato, endereço e tipo de material.
-- Validação no servidor, com limites de tamanho e verificação de e-mail ou telefone.
-- Verificação de que o tipo de material existe e está ativo.
-- Token CSRF por sessão para proteger o envio do formulário.
-- Gravação do solicitante e do pedido em uma transação SQLite.
-- Status inicial automático `pendente`.
-- Página de confirmação com identificador `SOL-0001` (numeração conforme o ID gerado).
-- Tipos iniciais de material: papel, plástico, vidro e metal.
+```bash
+flask --app run init-db && waitress-serve --listen=0.0.0.0:$PORT run:app
+```
 
-O cadastro representa um registro persistido no banco local. A consulta geral está disponível em `/solicitacoes`, com filtro por status e acesso à página de detalhes de cada pedido. A atualização de status será desenvolvida em etapa posterior.
+5. Configure o Healthcheck Path como `/health` e gere um domínio público para o serviço.
+6. Mantenha apenas uma réplica enquanto o banco for SQLite. Para uso real por múltiplos operadores, implemente autenticação e avalie um banco gerenciado, como PostgreSQL.
 
-## Funcionalidade implementada nesta versão: consulta
+O comando de inicialização cria as tabelas se ainda não existirem. O volume em `/data` mantém o arquivo SQLite entre reinicializações e novos deploys. Confirme nos logs que a inicialização foi concluída e que o serviço está ouvindo na porta fornecida pelo Railway.
 
-A consulta está disponível em `/solicitacoes` e inclui:
+## Monitoramento
 
-- Listagem dos pedidos persistidos no SQLite, com identificação, solicitante, material, endereço, status e data.
-- Resumo das quantidades por status.
-- Filtro por todos, pendente, em andamento ou concluída.
-- Acesso à página de detalhes de cada solicitação.
-- Tratamento de filtro inválido e estado vazio da listagem.
+O endpoint `/health` verifica a existência da tabela principal do SQLite e retorna HTTP 200 quando a aplicação e o banco estão disponíveis; em caso de falha ou esquema não inicializado, retorna HTTP 503. Esse endpoint pode ser acompanhado por uma ferramenta externa de monitoramento de disponibilidade. O Healthcheck do Railway valida a inicialização do deploy, mas não substitui monitoramento contínuo após a publicação.
 
-## Funcionalidade implementada nesta versão: atualização de status
+## Segurança e limitações
 
-Na página de detalhes da solicitação, o responsável pode registrar a próxima situação do pedido. As transições são controladas no servidor e persistidas no SQLite:
-
-- `pendente` pode avançar para `em andamento` ou `concluída`;
-- `em andamento` pode avançar para `concluída`;
-- `concluída` é um estado final nesta versão e não permite retrocesso.
-
-O formulário utiliza token CSRF. O servidor rejeita estados desconhecidos, transições não permitidas e pedidos inexistentes. A listagem e a página de detalhes passam a refletir o status gravado.
-
-## Próximas entregas planejadas
-
-1. Ampliar testes unitários e de integração.
-2. Configurar integração contínua com GitHub Actions.
-3. Implementar autenticação e controles de acesso antes de qualquer uso operacional.
-4. Evoluir a interface e avaliar o fluxo com participantes externos, mediante concordância.
-
-## Observação acadêmica
-
-O Coletivo Recicla Bairro é um cenário fictício utilizado para planejamento acadêmico. A aplicação deverá utilizar dados demonstrativos até que exista validação autorizada com participantes reais.
-
-## Datas e horário
-
-O SQLite mantém `CURRENT_TIMESTAMP` em UTC. Na apresentação, os horários são
-convertidos para o fuso de Brasília (UTC-03), sem alterar o valor armazenado.
+- `RECICLA_SECRET_KEY` deve ser definida no Railway; a aplicação interrompe a inicialização em ambiente Railway se a variável estiver ausente.
+- O token CSRF protege os formulários de alteração.
+- As consultas SQL usam parâmetros e o banco aplica chaves estrangeiras e restrições de status.
+- O MVP ainda não possui autenticação/autorização para usuários. Não utilize dados pessoais reais nem o disponibilize como sistema operacional comunitário até implementar controles de acesso e realizar validação real.
+- A validação comunitária feita na etapa acadêmica foi simulada. Ela não deve ser descrita como entrevista ou teste real.

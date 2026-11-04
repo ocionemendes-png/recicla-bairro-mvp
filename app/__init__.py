@@ -12,12 +12,7 @@ from app.database import close_db
 
 
 def format_datetime_br(value: str | datetime | None) -> str:
-    """Converte timestamps UTC do SQLite para o horário de Brasília (UTC-03).
-
-    O SQLite CURRENT_TIMESTAMP armazena data/hora em UTC sem informação
-    explícita de fuso. A conversão ocorre apenas na apresentação; o valor
-    original permanece inalterado no banco de dados.
-    """
+    """Converte timestamps UTC do SQLite para o horário de Brasília (UTC-03)."""
     if value is None or value == "":
         return ""
 
@@ -26,8 +21,7 @@ def format_datetime_br(value: str | datetime | None) -> str:
         if parsed.tzinfo is None:
             parsed = parsed.replace(tzinfo=timezone.utc)
         brasilia_timezone = timezone(timedelta(hours=-3))
-        local_time = parsed.astimezone(brasilia_timezone)
-        return local_time.strftime("%d/%m/%Y às %H:%M:%S")
+        return parsed.astimezone(brasilia_timezone).strftime("%d/%m/%Y às %H:%M:%S")
     except (TypeError, ValueError):
         return str(value)
 
@@ -37,15 +31,21 @@ def create_app(test_config: dict | None = None) -> Flask:
     app = Flask(__name__, instance_relative_config=True)
     app.add_template_filter(format_datetime_br, "datetime_br")
 
+    secret_key = os.environ.get("RECICLA_SECRET_KEY")
+    if os.environ.get("RAILWAY_ENVIRONMENT") and not secret_key:
+        raise RuntimeError(
+            "Configure RECICLA_SECRET_KEY nas variáveis do serviço antes de iniciar a aplicação."
+        )
+
     app.config.from_mapping(
-        SECRET_KEY=os.environ.get(
-            "RECICLA_SECRET_KEY",
-            "chave-local-de-desenvolvimento-nao-usar-em-producao",
-        ),
+        SECRET_KEY=secret_key or "chave-local-de-desenvolvimento-nao-usar-em-producao",
         DATABASE=os.environ.get(
             "RECICLA_DATABASE",
             str(Path(app.instance_path) / "recicla.sqlite3"),
         ),
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE="Lax",
+        SESSION_COOKIE_SECURE=bool(os.environ.get("RAILWAY_ENVIRONMENT")),
     )
 
     if test_config:
