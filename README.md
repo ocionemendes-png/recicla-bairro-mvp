@@ -112,6 +112,10 @@ flask --app run init-db && waitress-serve --listen=0.0.0.0:$PORT run:app
 
 O comando de inicialização cria as tabelas se ainda não existirem. O volume em `/data` mantém o arquivo SQLite entre reinicializações e novos deploys. Confirme nos logs que a inicialização foi concluída e que o serviço está ouvindo na porta fornecida pelo Railway.
 
+## Acessibilidade e relação com o ODS 12
+
+A interface inclui rótulos associados aos campos dos formulários, mensagens de orientação e erro vinculadas aos respectivos campos, indicação visual de foco para navegação por teclado e layout responsivo para diferentes tamanhos de tela. Esses recursos ajudam a tornar o cadastro e o acompanhamento das solicitações mais claros e acessíveis em diferentes dispositivos e formas de navegação. No contexto do Recicla Bairro, essa facilidade de uso pode favorecer a participação nas solicitações de coleta seletiva e contribuir indiretamente para o **ODS 12 – Consumo e Produção Responsáveis, especialmente a Meta 12.5**, relacionada à prevenção, redução, reciclagem e reutilização de resíduos. Essa relação representa uma contribuição potencial da ferramenta: não comprova aumento da reciclagem ou redução de resíduos, resultados que dependeriam da adoção do sistema e de coletas reais. Como o projeto utiliza um cenário comunitário fictício, essa contribuição ainda não foi validada com usuários ou organização reais.
+
 ## Monitoramento
 
 O endpoint `/health` verifica a existência da tabela principal do SQLite e retorna HTTP 200 quando a aplicação e o banco estão disponíveis; em caso de falha ou esquema não inicializado, retorna HTTP 503. Esse endpoint pode ser acompanhado por uma ferramenta externa de monitoramento de disponibilidade. O Healthcheck do Railway valida a inicialização do deploy, mas não substitui monitoramento contínuo após a publicação.
